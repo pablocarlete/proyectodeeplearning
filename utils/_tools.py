@@ -1,2 +1,2 @@
-def get_time_windows(a, b):
+def ola(a, b):
 	return a+b
