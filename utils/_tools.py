@@ -21,6 +21,6 @@ def split_dataframe(df, train=0.7, val=0.2):
 	indx_1 = int( train*df.shape[0])
 	indx_2 = int( (train+val)*df.shape[0])
 	
-	df_train, df_val, df_test = df.iloc[:indx1, :], df.iloc[indx1:indx2, :], df.iloc[indx2:, :]
+	df_train, df_val, df_test = df.iloc[:indx_1, :], df.iloc[indx_1:indx_2, :], df.iloc[indx_2:, :]
 	
 	return df_train, df_val, df_test
