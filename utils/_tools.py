@@ -42,74 +42,65 @@ def generate_data_spectrogram(df,train=0.7, val=0.2, fs=1.0,
                               axis=- 1, mode='psd'):
 							  
 	"""
-  función chora
+	función chora
 
-  """
+	"""
   
-  # obtener keys del datafram
-  keys = list(df.columns)
+	# obtener keys del datafram
+	keys = list(df.columns)
 
-  # seperar dataframe en train, validation y test
-  df_train, df_val, df_test = split_dataframe(df, train=train, val=val)
+	# seperar dataframe en train, validation y test
+	df_train, df_val, df_test = split_dataframe(df, train=train, val=val)
 
-  # inicializar lista vacía
-  train = list()
-  val = list()
-  test = list()
+	# inicializar lista vacía
+	train = list()
+	val = list()
+	test = list()
 
-  Y_train = list()
-  Y_val = list()
-  Y_test = list()
+	Y_train = list()
+	Y_val = list()
+	Y_test = list()
 
-  # obtener espectrogramas y guardarlos en la lista
-  for i in range(len(keys)):
-    _, _, spectrogram_train = signal.spectrogram(df_train[keys[i]], fs=fs,
-                                           window=window, nperseg=nperseg, 
-                                           noverlap=noverlap, nfft=nfft, 
-                                           detrend=detrend, return_onesided=return_onesided,
-                                           scaling=scaling, axis=axis, mode=mode)
+	# obtener espectrogramas y guardarlos en la lista
+	for i in range(len(keys)):
+		_, _, spectrogram_train = signal.spectrogram(df_train[keys[i]], fs=fs, window=window, nperseg=nperseg, noverlap=noverlap, nfft=nfft, detrend=detrend, return_onesided=return_onesided, scaling=scaling, axis=axis, mode=mode)
     
-    _, _, spectrogram_val = signal.spectrogram(df_val[keys[i]], fs=fs,
-                                           window=window, nperseg=nperseg, 
-                                           noverlap=noverlap, nfft=nfft, 
-                                           detrend=detrend, return_onesided=return_onesided,
-                                           scaling=scaling, axis=axis, mode=mode)
+		_, _, spectrogram_val = signal.spectrogram(df_val[keys[i]], fs=fs, window=window, nperseg=nperseg, noverlap=noverlap, nfft=nfft, detrend=detrend, return_onesided=return_onesided, scaling=scaling, axis=axis, mode=mode)
     
-    _, _, spectrogram_test = signal.spectrogram(df_test[keys[i]], fs=fs,
-                                           window=window, nperseg=nperseg, 
-                                           noverlap=noverlap, nfft=nfft, 
-                                           detrend=detrend, return_onesided=return_onesided,
-                                           scaling=scaling, axis=axis, mode=mode)
-    # Corregir shape del spectrograma
-    spectrogram_train = spectrogram_train.transpose()
-    spectrogram_val = spectrogram_val.transpose()
-    spectrogram_test = spectrogram_test.transpose()
+		_, _, spectrogram_test = signal.spectrogram(df_test[keys[i]], fs=fs, window=window, nperseg=nperseg, noverlap=noverlap, nfft=nfft, detrend=detrend, return_onesided=return_onesided,scaling=scaling, axis=axis, mode=mode)
+		
+		# Corregir shape del spectrograma
+		spectrogram_train = spectrogram_train.transpose()
+		spectrogram_val = spectrogram_val.transpose()
+		spectrogram_test = spectrogram_test.transpose()
 
-    # Guardar espectrograma en la lista
-    train.append(spectrogram_train)
-    val.append(spectrogram_val)
-    test.append(spectrogram_test)
+		# Guardar espectrograma en la lista
+		train.append(spectrogram_train)
+		val.append(spectrogram_val)
+		test.append(spectrogram_test)
 
-    # generar  etiquetas
-    Y_train.append([i]*spectrogram_train.shape[0])
-    Y_val.append([i]*spectrogram_val.shape[0])
-    Y_test.append([i]*spectrogram_test.shape[0])
+		# generar  etiquetas
+		Y_train.append([i]*spectrogram_train.shape[0])
+		Y_val.append([i]*spectrogram_val.shape[0])
+		Y_test.append([i]*spectrogram_test.shape[0])
 
-  # juntar todos los espectrogramas en un solo np.array
-  X_train = np.vstack(train)
-  X_val = np.vstack(val)
-  X_test = np.vstack(test)
+	# juntar todos los espectrogramas en un solo np.array
+	X_train = np.vstack(train)
+	X_val = np.vstack(val)
+	X_test = np.vstack(test)
 
-  # generar etiquetas
-  i = len(keys)
+	# generar etiquetas
+	i = len(keys)
 
-  Y_train = np.reshape( np.array(Y_train), (-1, 1) )
-  Y_train = to_categorical(Y_train, i)
+	Y_train = np.reshape( np.array(Y_train), (-1, 1) )
+	Y_train = to_categorical(Y_train, i)
 
-  Y_val = np.reshape( np.array(Y_val), (-1, 1) )
-  Y_val = to_categorical(Y_val, i)
+	Y_val = np.reshape( np.array(Y_val), (-1, 1) )
+	Y_val = to_categorical(Y_val, i)
 
-  Y_test = np.reshape( np.array(Y_test), (-1, 1) )
-  Y_test = to_categorical(Y_test, i)
+	Y_test = np.reshape( np.array(Y_test), (-1, 1) )
+	Y_test = to_categorical(Y_test, i)
 
-  return X_train, X_val, X_test, Y_train, Y_val, Y_test
+	return X_train, X_val, X_test, Y_train, Y_val, Y_test
+	
+#------------------------------------------------
