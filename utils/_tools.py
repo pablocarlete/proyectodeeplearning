@@ -106,10 +106,9 @@ def generate_data_spectrogram(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 	scaler.fit(X_train)
 	
 	if normalizar:
-		# transformar o escalar los datos del resto de los sets
 		X_train = scaler.transform(X_train)
 		X_val = scaler.transform(X_val)
-		X_val = scaler.transform(X_val)
+		X_test = scaler.transform(X_test)
 
 	# generar etiquetas
 	i = len(keys)
