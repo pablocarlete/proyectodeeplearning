@@ -4,6 +4,15 @@ from scipy import signal
 from keras.utils import to_categorical
 from sklearn.preprocessing import MinMaxScaler
 
+
+import matplotlib.pyplot as plt
+from matplotlib import cm
+
+from sklearn.metrics import confusion_matrix
+
+from scipy.stats import kurtosis
+from scipy.stats import skew
+
 #---------------------------------------------------------------------------------------------------
 def split_dataframe(df, train=0.7, val=0.2, dis=False):
 	"""
