@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy import signal
 from keras.utils import to_categorical
+from sklearn.preprocessing import MinMaxScaler
 
 #---------------------------------------------------------------------------------------------------
 def split_dataframe(df, train=0.7, val=0.2, dis=False):
@@ -35,7 +36,7 @@ def split_dataframe(df, train=0.7, val=0.2, dis=False):
 	
 	return df_train, df_val, df_test
 	
-def generate_data_spectrogram(df,train=0.7, val=0.2, fs=1.0,
+def generate_data_spectrogram(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
                               window=('tukey', 0.25), nperseg=None, 
                               noverlap=None, nfft=None, detrend='constant', 
                               return_onesided=True, scaling='density', 
@@ -88,6 +89,18 @@ def generate_data_spectrogram(df,train=0.7, val=0.2, fs=1.0,
 	X_train = np.vstack(train)
 	X_val = np.vstack(val)
 	X_test = np.vstack(test)
+	
+	# inicializar MinMaxScaler
+	scaler = MinMaxScaler( feature_range=(0, 1) )
+	
+	# fit scaler con los datos de entrenamiento X_train
+	scaler.fit(X_train)
+	
+	if normalizar:
+		# transformar o escalar los datos del resto de los sets
+		X_train = scaler.transform(X_train)
+		X_val = scaler.transform(X_val)
+		X_val = scaler.transform(X_val)
 
 	# generar etiquetas
 	i = len(keys)
