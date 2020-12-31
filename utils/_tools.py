@@ -123,8 +123,124 @@ def generate_data_spectrogram(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 	Y_test = to_categorical(Y_test, i)
 
 	return X_train, X_val, X_test, Y_train, Y_val, Y_test
+# ----------------------------------------------------------------------------
+
+def generate_dataset_sc(df, train=0.7, val=0.2, nperseg, noverlap, scales_len=30,
+						wavelet='gaus1', sampling_period=1.0, normalizar=True):
 	
-#------------------------------------------------
+	"""
+	A partir de un dataframe genera los conjuntos de datos X_train, X_val,
+	X_test y las etiquetas correspondientes Y_train, Y_val e Y_test. Utilizando
+	el método cwt.
+	
+	:param pd.dataframe df:
+		dataframe que en cada columna contiene una serie temporal correspondiente
+		a la medición de vibraciones de un rodamiento bajo determinadas condiciones
+		de operación.
+		
+	:param float train:
+		fracción del dataframe que será utilizado para generar datos de entrenamiento.
+		
+	:param float val:
+		fracción del dataframe que será utilizado para generar datos de validación.
+		
+	:param int nperseg:
+		largo de cada segmento (Ventanas temporales Funcion_Pancho)
+		
+	:param int noverlap:
+		numero de punto que se superponen entre un segmento y el siguiente.
+		
+	:param int scales_len:
+		cantidad de elementos que tiene el np.array Scales en el método CWT.
+		
+	:param str wavelet:
+		Wavelet que se utiliza en el método CWT.
+		
+	:param float sampling_period:
+		periodo de muestreo utilizado en la serie temporal.
+	:param boolean normalizar:
+		si es True los datos X_train, X_val y X_test son normalizados entre
+		(0,1) respecto al conjunto X_train, utilizando el método MinMaxScaler.
+	"""
+	
+	# obtener keys del dataframe
+	keys = list(df.columns)
+	
+	# separar dataframe en train, validation y test
+	df_train, df_val, df_test = split_dataframe(df)
+	
+	# inicializar listas vacías
+	sc_train = list()
+	sc_val = list()
+	sc_test = list()
+	
+	Y_train = list()
+	Y_val = list()
+	Y_test = list()
+	
+	#obtener escalograma de cada weá
+	for i in range(len(keys)):
+		coef_train, _ = pywt.cwt(np.array(df_train[keys[i]]),
+								np.arange(1,scales_len+1),wavelet,
+								sampling_period=sampling_period)
+								
+		coef_val, _ = pywt.cwt(np.array(df_val[keys[i]]),
+								np.arange(1,scales_len+1),wavelet,
+								sampling_period=sampling_period)
+								
+		coef_test, _ = pywt.cwt(np.array(df_test[keys[i]]),
+								np.arange(1,scales_len+1),wavelet,
+								sampling_period=sampling_period)
+		
+		#corregir shape
+		coef_train = coef_train.transpose()
+		coef_val = coef_val.transpose()
+		coef_test = coef_test.transpose()
+		
+		# Generar array 3D con ventanas temporales (FUNCION PANCHO)
+		coef_train = funcion_pancho(coef_train, nperseg, noverlap)
+		coef_val = funcion_pancho(coef_val, nperseg, noverlap)
+		coef_test = funcion_pancho(coef_test, nperseg, noverlap)
+		
+		# guardar escalogramas en la lista
+		sc_train.append(coef_train)
+		sc_val.append(coef_val)
+		sc_test.append(coef_test)
+		
+		# generar etiquetas
+		Y_train.append([i]*coef_train.shape[0])
+		Y_val.append([i]*coef_val.shape[0])
+		Y_test.append([i]*coef_test.shape[0])
+		
+	# juntar todos los escalogramas en un solo np.array
+	X_train = np.vstack(sc_train)
+	X_val = np.vstack(sc_val)
+	X_test = np.vstack(sc_test)
+	
+	if normalizar:
+		# inicializar MinMaxScaler
+		scaler = MinMaxScaler( feature_range=(0, 1) )
+	
+		# fit scaler con los datos de entrenamiento X_train
+		scaler.fit(X_train)
+		
+		X_train = scaler.transform(X_train)
+		X_val = scaler.transform(X_val)
+		X_test = scaler.transform(X_test)
+	
+	# generar etiquetas
+	i = len(keys)
+
+	Y_train = np.reshape( np.array(Y_train), (-1, 1) )
+	Y_train = to_categorical(Y_train, i)
+
+	Y_val = np.reshape( np.array(Y_val), (-1, 1) )
+	Y_val = to_categorical(Y_val, i)
+
+	Y_test = np.reshape( np.array(Y_test), (-1, 1) )
+	Y_test = to_categorical(Y_test, i)
+
+	return X_train, X_val, X_test, Y_train, Y_val, Y_test
 # ----------------------------------------------------------------------------
 def plot_confusion_matrix(Y_true, Y_pred, target_names,
                           title='Confusion matrix',
