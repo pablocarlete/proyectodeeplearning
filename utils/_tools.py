@@ -162,8 +162,7 @@ def get_time_windows4(data, nperwd, noverlap):
 	
 # ----------------------------------------------------------------------------
 
-def generate_dataset_sc(df, train=0.7, val=0.2, nperseg, noverlap, scales_len=30,
-						wavelet='gaus1', sampling_period=1.0, normalizar=True):
+def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2, scales_len=30, wavelet='gaus1', sampling_period=1.0, normalizar=True):
 	
 	"""
 	A partir de un dataframe genera los conjuntos de datos X_train, X_val,
