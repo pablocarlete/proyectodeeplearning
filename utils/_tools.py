@@ -126,13 +126,11 @@ def generate_data_spectrogram(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 # ----------------------------------------------------------------------------
 
 def get_time_windows4(data, nperwd, noverlap):
-    """
-    -> np.array
-    
-    generates a numpy array of time windows, of length nperwd, extracted
-    from data.
-    
-    :param pd.Series x:
+	"""
+	-> np.array
+	generates a numpy array of time windows, of length nperwd, extracted
+	from data.
+	:param pd.Series x:
       time series of measurement values.
     :param int nperwd:
       largo de ejemplos en cada ventana temporal.
@@ -141,9 +139,7 @@ def get_time_windows4(data, nperwd, noverlap):
     :returns:
       a numpy array of size (n_windows, nperwd, largo).
     """
-	
 	# obtener np.array de la serie de datos
-	
 	x = data.values
 	# obtener np.array de la serie de datos
 	n_data = x.shape[0]
@@ -155,14 +151,12 @@ def get_time_windows4(data, nperwd, noverlap):
 	
 	# inicializar dataset
 	X = np.zeros( (n_windows, nperwd,largo) )
-	
 	# generar time windows
 	for i in range(n_windows):
-        # obtener index de la ventana
-        idx_start, idx_end = i*nleap, i*nleap + nperwd
-      
-        # asignar datos a X
-        X[i, :] = x[idx_start:idx_end]
+		# obtener index de la ventana
+		idx_start, idx_end = i*nleap, i*nleap + nperwd
+		# asignar datos a X
+		X[i, :] = x[idx_start:idx_end]
 	
 	return X
 	
