@@ -130,7 +130,7 @@ def generate_dataset_sp(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 		# corregir shape del espectrograma
 		sp_train = sp_train.transpose()
 		sp_val = sp_val.transpose()
-		sp_test = spectrogram_test.transpose()
+		sp_test = sp_test.transpose()
 
 		# guardar espectrograma en la lista
 		train.append(sp_train)
