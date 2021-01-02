@@ -141,7 +141,7 @@ def get_time_windows4(data, nperwd, noverlap):
       a numpy array of size (n_windows, nperwd, largo).
     """
 	# obtener np.array de la serie de datos
-	x = data.values
+	x = data
 	# obtener np.array de la serie de datos
 	n_data = x.shape[0]
 	largo = x.shape[1]
