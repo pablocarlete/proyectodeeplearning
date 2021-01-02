@@ -241,9 +241,9 @@ def generate_dataset_sc(df, train=0.7, val=0.2, nperseg, noverlap, scales_len=30
 		coef_test = coef_test.transpose()
 		
 		# Generar array 3D con ventanas temporales (FUNCION PANCHO)
-		coef_train = funcion_pancho(coef_train, nperseg, noverlap)
-		coef_val = funcion_pancho(coef_val, nperseg, noverlap)
-		coef_test = funcion_pancho(coef_test, nperseg, noverlap)
+		coef_train = get_time_windows4(coef_train, nperseg, noverlap)
+		coef_val = get_time_windows4(coef_val, nperseg, noverlap)
+		coef_test = get_time_windows4(coef_test, nperseg, noverlap)
 		
 		# guardar escalogramas en la lista
 		sc_train.append(coef_train)
