@@ -256,9 +256,9 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2, scales_len=30
 	
 	if normalizar:
 		# convertir arrays en 2D
-		X_train = X_train.reshape(-1, scale_len)
-		X_val = X_val.reshape(-1, scale_len)
-		X_test = X_test.reshape(-1, scale_len)
+		X_train = X_train.reshape(-1, scales_len)
+		X_val = X_val.reshape(-1, scales_len)
+		X_test = X_test.reshape(-1, scales_len)
 		
 		# inicializar MinMaxScaler
 		scaler = MinMaxScaler( feature_range=(0, 1) )
@@ -271,9 +271,9 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2, scales_len=30
 		X_test = scaler.transform(X_test)
 	
 	# dejar shape apta para red conv
-	X_train = X_train.reshape(-1, nperseg, scale_len, 1)
-	X_val = X_val.reshape(-1, nperseg, scale_len, 1)
-	X_test = X_test.reshape(-1, nperseg, scale_len, 1)
+	X_train = X_train.reshape(-1, nperseg, scales_len, 1)
+	X_val = X_val.reshape(-1, nperseg, scales_len, 1)
+	X_test = X_test.reshape(-1, nperseg, scales_len, 1)
 	
 	# generar etiquetas
 	i = len(keys)
