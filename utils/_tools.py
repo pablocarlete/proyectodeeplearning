@@ -80,7 +80,7 @@ def get_time_windows_3D(data, nperseg, noverlap):
 		idx_start, idx_end = i*nleap, i*nleap + nperseg
 		
 		# asignar datos a X
-		X[i, :, :] = data[idx_start:idx_end, :]
+		X[i, :] = data[idx_start:idx_end]
 		
 	return X
 	
