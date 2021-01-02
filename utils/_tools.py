@@ -1,20 +1,17 @@
 import pandas as pd
 import numpy as np
 from scipy import signal
-from keras.utils import to_categorical
-from sklearn.preprocessing import MinMaxScaler
 import pywt
-
 
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
+from keras.utils import to_categorical
+from sklearn.preprocessing import MinMaxScaler
+
 from sklearn.metrics import confusion_matrix
 
-from scipy.stats import kurtosis
-from scipy.stats import skew
-
-#---------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 def split_dataframe(df, train=0.7, val=0.2, dis=False):
 	"""
 	divide un dataframe en tres partes.
@@ -32,101 +29,25 @@ def split_dataframe(df, train=0.7, val=0.2, dis=False):
 		Si es True se imprime la cantidad de datos en cada dataframe
 		
 	return:
-	df_train, df_val, df_test
+		pandas dataframe df_train, df_val, df_test
 	"""
+	
 	indx_1 = int( train*df.shape[0])
 	indx_2 = int( (train+val)*df.shape[0])
 	
-	df_train, df_val, df_test = df.iloc[:indx_1, :], df.iloc[indx_1:indx_2, :], df.iloc[indx_2:, :]
-	
+	df_train, df_val, df_test = (df.iloc[:indx_1, :],
+							df.iloc[indx_1:indx_2, :], df.iloc[indx_2:, :])
+							
 	if dis:
 		print( 'train split: {:d} data points'.format(df_train.shape[0]) )
 		print( 'validation split: {:d} data points'.format(df_val.shape[0]) )
 		print( 'test split: {:d} data points'.format(df_test.shape[0]) )
-	
-	return df_train, df_val, df_test
-	
-def generate_data_spectrogram(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
-                              window=('tukey', 0.25), nperseg=None, 
-                              noverlap=None, nfft=None, detrend='constant', 
-                              return_onesided=True, scaling='density', 
-                              axis=- 1, mode='psd'):
-							  
-	"""
-	función chora
-
-	"""
-  
-	# obtener keys del datafram
-	keys = list(df.columns)
-
-	# seperar dataframe en train, validation y test
-	df_train, df_val, df_test = split_dataframe(df, train=train, val=val)
-
-	# inicializar lista vacía
-	train = list()
-	val = list()
-	test = list()
-
-	Y_train = list()
-	Y_val = list()
-	Y_test = list()
-
-	# obtener espectrogramas y guardarlos en la lista
-	for i in range(len(keys)):
-		_, _, spectrogram_train = signal.spectrogram(df_train[keys[i]], fs=fs, window=window, nperseg=nperseg, noverlap=noverlap, nfft=nfft, detrend=detrend, return_onesided=return_onesided, scaling=scaling, axis=axis, mode=mode)
-    
-		_, _, spectrogram_val = signal.spectrogram(df_val[keys[i]], fs=fs, window=window, nperseg=nperseg, noverlap=noverlap, nfft=nfft, detrend=detrend, return_onesided=return_onesided, scaling=scaling, axis=axis, mode=mode)
-    
-		_, _, spectrogram_test = signal.spectrogram(df_test[keys[i]], fs=fs, window=window, nperseg=nperseg, noverlap=noverlap, nfft=nfft, detrend=detrend, return_onesided=return_onesided,scaling=scaling, axis=axis, mode=mode)
 		
-		# Corregir shape del spectrograma
-		spectrogram_train = spectrogram_train.transpose()
-		spectrogram_val = spectrogram_val.transpose()
-		spectrogram_test = spectrogram_test.transpose()
+	return df_train, df_val, df_test
 
-		# Guardar espectrograma en la lista
-		train.append(spectrogram_train)
-		val.append(spectrogram_val)
-		test.append(spectrogram_test)
-
-		# generar  etiquetas
-		Y_train.append([i]*spectrogram_train.shape[0])
-		Y_val.append([i]*spectrogram_val.shape[0])
-		Y_test.append([i]*spectrogram_test.shape[0])
-
-	# juntar todos los espectrogramas en un solo np.array
-	X_train = np.vstack(train)
-	X_val = np.vstack(val)
-	X_test = np.vstack(test)
-	
-	# inicializar MinMaxScaler
-	scaler = MinMaxScaler( feature_range=(0, 1) )
-	
-	# fit scaler con los datos de entrenamiento X_train
-	scaler.fit(X_train)
-	
-	if normalizar:
-		X_train = scaler.transform(X_train)
-		X_val = scaler.transform(X_val)
-		X_test = scaler.transform(X_test)
-
-	# generar etiquetas
-	i = len(keys)
-
-	Y_train = np.reshape( np.array(Y_train), (-1, 1) )
-	Y_train = to_categorical(Y_train, i)
-
-	Y_val = np.reshape( np.array(Y_val), (-1, 1) )
-	Y_val = to_categorical(Y_val, i)
-
-	Y_test = np.reshape( np.array(Y_test), (-1, 1) )
-	Y_test = to_categorical(Y_test, i)
-
-	return X_train, X_val, X_test, Y_train, Y_val, Y_test
 # ----------------------------------------------------------------------------
 
-def get_time_windows4(data, nperwd, noverlap):
+def get_time_windows_3D(data, nperseg, noverlap):
 	"""
 	-> np.array
 	generates a numpy array of time windows, of length nperwd, extracted
@@ -138,32 +59,125 @@ def get_time_windows4(data, nperwd, noverlap):
     :param int nleap:
       numero de punto que se superponen entre un segmento y el siguiente.
     :returns:
-      a numpy array of size (n_windows, nperwd, largo).
+      a numpy array of size (n_windows, nperwd, scales_len).
     """
-	# obtener np.array de la serie de datos
-	x = data
-	# obtener np.array de la serie de datos
-	n_data = x.shape[0]
-	largo = x.shape[1]
-	nleap =nperwd-noverlap
+	
+	# obtener dimensiones del array
+	n_data = data.shape[0]
+	scales_len = data.shape[1]
+	nleap = nperseg - noverlap
+	
 	# determinar cantidad de ventanas a generar
-	n_windows = np.floor( (n_data - nperwd)/nleap ) + 1
+	n_windows = np.floor( (n_data - nperseg)/nleap ) + 1
 	n_windows = int(n_windows)
 	
 	# inicializar dataset
-	X = np.zeros( (n_windows, nperwd,largo) )
+	X = np.zeros( (n_windows, nperseg, scales_len) )
+	
 	# generar time windows
 	for i in range(n_windows):
 		# obtener index de la ventana
-		idx_start, idx_end = i*nleap, i*nleap + nperwd
+		idx_start, idx_end = i*nleap, i*nleap + nperseg
+		
 		# asignar datos a X
-		X[i, :] = x[idx_start:idx_end]
-	
+		X[i, :, :] = data[idx_start:idx_end, :]
+		
 	return X
 	
 # ----------------------------------------------------------------------------
 
-def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2, scales_len=30, wavelet='gaus1', sampling_period=1.0, normalizar=True):
+def generate_dataset_sp(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
+						window=('tukey', 0.25), nperseg=None, noverlap=None,
+						nfft=None, detrend='constant', return_onesided=True,
+						scaling='density', axis=- 1, mode='psd'):
+							  
+	"""
+	función chora
+	"""
+  
+	# obtener keys del datafram
+	keys = list(df.columns)
+
+	# seperar dataframe en train, validation y test
+	df_train, df_val, df_test = split_dataframe(df, train=train, val=val)
+
+	# inicializar listas vacías
+	train = list()
+	val = list()
+	test = list()
+
+	Y_train = list()
+	Y_val = list()
+	Y_test = list()
+
+	# obtener espectrogramas y guardarlos en la lista
+	for i in range(len(keys)):
+		_, _, sp_train = signal.spectrogram(df_train[keys[i]], fs=fs, window=window,
+								nperseg=nperseg, noverlap=noverlap, nfft=nfft,
+								detrend=detrend, return_onesided=return_onesided,
+								scaling=scaling, axis=axis, mode=mode)
+								
+		_, _, sp_val = signal.spectrogram(df_val[keys[i]], fs=fs, window=window,
+								nperseg=nperseg, noverlap=noverlap, nfft=nfft,
+								detrend=detrend, return_onesided=return_onesided,
+								scaling=scaling, axis=axis, mode=mode)
+								
+		_, _, sp_test = signal.spectrogram(df_test[keys[i]], fs=fs, window=window,
+								nperseg=nperseg, noverlap=noverlap, nfft=nfft,
+								detrend=detrend, return_onesided=return_onesided,
+								scaling=scaling, axis=axis, mode=mode)
+								
+		# corregir shape del espectrograma
+		sp_train = sp_train.transpose()
+		sp_val = sp_val.transpose()
+		sp_test = sp_test.transpose()
+
+		# guardar espectrograma en la lista
+		train.append(sp_train)
+		val.append(sp_val)
+		test.append(sp_test)
+
+		# generar  etiquetas
+		Y_train.append( [i]*sp_train.shape[0] )
+		Y_val.append( [i]*sp_val.shape[0] )
+		Y_test.append( [i]*sp_test.shape[0] )
+		
+	# juntar todos los espectrogramas en un solo np.array
+	X_train = np.vstack(train)
+	X_val = np.vstack(val)
+	X_test = np.vstack(test)
+	
+	# normalizar
+	if normalizar:
+		# inicializar MinMaxScaler
+		scaler = MinMaxScaler( feature_range=(0, 1) )
+		
+		# fit scaler con los datos de entrenamiento X_train
+		scaler.fit(X_train)
+		
+		X_train = scaler.transform(X_train)
+		X_val = scaler.transform(X_val)
+		X_test = scaler.transform(X_test)
+		
+	# generar etiquetas
+	i = len(keys)
+	
+	Y_train = np.reshape( np.array(Y_train), (-1, 1) )
+	Y_train = to_categorical(Y_train, i)
+	
+	Y_val = np.reshape( np.array(Y_val), (-1, 1) )
+	Y_val = to_categorical(Y_val, i)
+
+	Y_test = np.reshape( np.array(Y_test), (-1, 1) )
+	Y_test = to_categorical(Y_test, i)
+
+	return X_train, X_val, X_test, Y_train, Y_val, Y_test
+	
+# ----------------------------------------------------------------------------
+
+def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2,
+				scales_len=30, wavelet='gaus1', sampling_period=1.0,
+				method='fft', normalizar=True):
 	
 	"""
 	A partir de un dataframe genera los conjuntos de datos X_train, X_val,
@@ -204,50 +218,49 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2, scales_len=30
 	keys = list(df.columns)
 	
 	# separar dataframe en train, validation y test
-	df_train, df_val, df_test = split_dataframe(df)
+	df_train, df_val, df_test = split_dataframe(df, train=train, val=val)
 	
 	# inicializar listas vacías
-	sc_train = list()
-	sc_val = list()
-	sc_test = list()
+	train = list()
+	val = list()
+	test = list()
 	
 	Y_train = list()
 	Y_val = list()
 	Y_test = list()
 	
-	#obtener escalograma de cada weá
+	scales = np.arange( 1, scales_len+1 )
+	
+	#obtener escalograma y guardarlos en listas
 	for i in range(len(keys)):
-		coef_train, _ = pywt.cwt(np.array(df_train[keys[i]]),
-								np.arange(1,scales_len+1),wavelet,
-								sampling_period=sampling_period)
+		sc_train, _ = pywt.cwt(np.array(df_train[keys[i]]), scales, wavelet,
+								sampling_period=sampling_period, method=method)
 								
-		coef_val, _ = pywt.cwt(np.array(df_val[keys[i]]),
-								np.arange(1,scales_len+1),wavelet,
-								sampling_period=sampling_period)
+		sc_val, _ = pywt.cwt(np.array(df_val[keys[i]]), scales, wavelet,
+								sampling_period=sampling_period, method=method)
 								
-		coef_test, _ = pywt.cwt(np.array(df_test[keys[i]]),
-								np.arange(1,scales_len+1),wavelet,
-								sampling_period=sampling_period)
+		sc_test, _ = pywt.cwt(np.array(df_test[keys[i]]), scales, wavelet,
+								sampling_period=sampling_period, method=method)
 		
 		#corregir shape
-		coef_train = coef_train.transpose()
-		coef_val = coef_val.transpose()
-		coef_test = coef_test.transpose()
+		sc_train = sc_train.transpose()
+		sc_val = sc_val.transpose()
+		sc_test = sc_test.transpose()
 		
-		# Generar array 3D con ventanas temporales (FUNCION PANCHO)
-		coef_train = get_time_windows4(coef_train, nperseg, noverlap)
-		coef_val = get_time_windows4(coef_val, nperseg, noverlap)
-		coef_test = get_time_windows4(coef_test, nperseg, noverlap)
+		# Generar array 3D con ventanas temporales
+		sc_train = get_time_windows_3D(sc_train, nperseg, noverlap)
+		sc_val = get_time_windows_3D(sc_val, nperseg, noverlap)
+		sc_test = get_time_windows_3D(sc_test, nperseg, noverlap)
 		
 		# guardar escalogramas en la lista
-		sc_train.append(coef_train)
-		sc_val.append(coef_val)
-		sc_test.append(coef_test)
+		train.append(sc_train)
+		val.append(sc_val)
+		test.append(sc_test)
 		
 		# generar etiquetas
-		Y_train.append([i]*coef_train.shape[0])
-		Y_val.append([i]*coef_val.shape[0])
-		Y_test.append([i]*coef_test.shape[0])
+		Y_train.append( [i]*sc_train.shape[0] )
+		Y_val.append( [i]*sc_val.shape[0] )
+		Y_test.append( [i]*sc_test.shape[0] )
 		
 	# juntar todos los escalogramas en un solo np.array
 	X_train = np.vstack(sc_train)
@@ -385,3 +398,4 @@ def plot_loss_function(train_info, figsize=(5,5)):
     plt.legend(['train', 'validation'], loc='upper right')
     plt.show()
  
+# ----------------------------------------------------------------------------
