@@ -229,7 +229,7 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2,
 	Y_val = list()
 	Y_test = list()
 	
-	scales = np.arrange( 1, scales_len+1 )
+	scales = np.arange( 1, scales_len+1 )
 	
 	#obtener escalograma y guardarlos en listas
 	for i in range(len(keys)):
