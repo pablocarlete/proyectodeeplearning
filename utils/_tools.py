@@ -3,6 +3,7 @@ import numpy as np
 from scipy import signal
 from keras.utils import to_categorical
 from sklearn.preprocessing import MinMaxScaler
+import pywt
 
 
 import matplotlib.pyplot as plt
