@@ -125,6 +125,49 @@ def generate_data_spectrogram(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 	return X_train, X_val, X_test, Y_train, Y_val, Y_test
 # ----------------------------------------------------------------------------
 
+def get_time_windows4(data, nperwd, noverlap):
+    """
+    -> np.array
+    
+    generates a numpy array of time windows, of length nperwd, extracted
+    from data.
+    
+    :param pd.Series x:
+      time series of measurement values.
+    :param int nperwd:
+      largo de ejemplos en cada ventana temporal.
+    :param int nleap:
+      numero de punto que se superponen entre un segmento y el siguiente.
+    :returns:
+      a numpy array of size (n_windows, nperwd, largo).
+    """
+	
+	# obtener np.array de la serie de datos
+	
+	x = data.values
+	# obtener np.array de la serie de datos
+	n_data = x.shape[0]
+	largo = x.shape[1]
+	nleap =nperwd-noverlap
+	# determinar cantidad de ventanas a generar
+	n_windows = np.floor( (n_data - nperwd)/nleap ) + 1
+	n_windows = int(n_windows)
+	
+	# inicializar dataset
+	X = np.zeros( (n_windows, nperwd,largo) )
+	
+	# generar time windows
+	for i in range(n_windows):
+        # obtener index de la ventana
+        idx_start, idx_end = i*nleap, i*nleap + nperwd
+      
+        # asignar datos a X
+        X[i, :] = x[idx_start:idx_end]
+	
+	return X
+	
+# ----------------------------------------------------------------------------
+
 def generate_dataset_sc(df, train=0.7, val=0.2, nperseg, noverlap, scales_len=30,
 						wavelet='gaus1', sampling_period=1.0, normalizar=True):
 	
