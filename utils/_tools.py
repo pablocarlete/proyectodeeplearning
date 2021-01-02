@@ -251,7 +251,7 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2,
 		sc_train = get_time_windows_3D(sc_train, nperseg, noverlap)
 		sc_val = get_time_windows_3D(sc_val, nperseg, noverlap)
 		sc_test = get_time_windows_3D(sc_test, nperseg, noverlap)
-		
+
 		# guardar escalogramas en la lista
 		train.append(sc_train)
 		val.append(sc_val)
@@ -263,9 +263,9 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2,
 		Y_test.append( [i]*sc_test.shape[0] )
 		
 	# juntar todos los escalogramas en un solo np.array
-	X_train = np.vstack(sc_train)
-	X_val = np.vstack(sc_val)
-	X_test = np.vstack(sc_test)
+	X_train = np.vstack(train)
+	X_val = np.vstack(val)
+	X_test = np.vstack(test)
 	
 	if normalizar:
 		# convertir arrays en 2D
