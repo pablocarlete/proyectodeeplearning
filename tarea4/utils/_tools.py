@@ -105,17 +105,17 @@ def plot_confusion_matrix(Y_true, Y_pred, target_names,
 
 
 # ---------------------------------------------------------------------------- 
-def generate_ROC(X, Y, autoencoder):
+def generate_ROC(X_test, Y_test, autoencoder):
   """
   -> None
 
   genera y gráfica la curva Receiver Operating Characteristic sobre el detector
   de anomalías dado por el modelo autoencoder entregado.
 
-  :param np.array X:
+  :param np.array X_test:
     datos a clasificar mediante el detector de anomalías.
-  :param np.array Y:
-    etiquetas reales de los datos X.
+  :param np.array Y_test:
+    etiquetas reales de los datos X_test.
   :param keras.model autoencoder:
     modelo a partir del cual se construye el detector de anomalías.
 
@@ -125,9 +125,9 @@ def generate_ROC(X, Y, autoencoder):
 
   # obtener indices nominal_idx de samples nominales
   # ** esto es específico para este caso de estudio **
-  RUL = Y_test.flatten() 
-  nominal_idx = np.where( RUL == 1 )[0]
-  degraded_idx = np.where( RUL == 0 )[0]
+  label = Y_test.flatten() 
+  nominal_idx = np.where( label == 1 )[0]
+  degraded_idx = np.where(label == 0 )[0]
 
   # segementar samples nominales y degradados
   X_nominal = X[nominal_idx, :]
