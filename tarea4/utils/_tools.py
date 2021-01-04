@@ -130,8 +130,8 @@ def generate_ROC(X_test, Y_test, autoencoder):
   degraded_idx = np.where(label == 0 )[0]
 
   # segementar samples nominales y degradados
-  X_nominal = X[nominal_idx, :]
-  X_degraded = X[degraded_idx, :]
+  X_nominal = X_test[nominal_idx, :]
+  X_degraded = X_test[degraded_idx, :]
 
   # obtener reconstrucciones mediante el autoencoder
   AE_nominal = autoencoder(X_nominal)
