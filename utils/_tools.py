@@ -395,7 +395,32 @@ def generate_dataset_sc2(df, nperseg, noverlap, n_features=30,
 
 	return X, Y
 # ----------------------------------------------------------------------------
-
+def normalizar_sc(X_train, X_val, X_test):
+	nperseg = X_train.shape[1]
+	n_features = X_train.shape[2]
+	
+	# convertir a 2D
+	X_train = X_train.reshape(-1, n_features)
+	X_val = X_val.reshape(-1, n_features)
+	X_test = X_test.reshape(-1, n_features)
+	
+	# inicializar MinMaxScaler
+	scaler = MinMaxScaler( feature_range=(0, 1) )
+	
+	# fit scaler con los datos de entrenamiento X_train
+	scaler.fit(X_train)
+		
+	X_train = scaler.transform(X_train)
+	X_val = scaler.transform(X_val)
+	X_test = scaler.transform(X_test)
+	
+	# convertir a 3D
+	X_train = X_train.reshape(-1, nperseg, scales_len)
+	X_val = X_val.reshape(-1, nperseg, scales_len)
+	X_test = X_test.reshape(-1, nperseg, scales_len)
+	
+	return X_train, X_val, X_test
+	
 
 def plot_confusion_matrix(Y_true, Y_pred, target_names,
                           title='Confusion matrix',
