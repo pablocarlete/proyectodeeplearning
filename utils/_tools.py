@@ -406,6 +406,7 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 	del test
 	
 	if normalizar:
+		print('wa normalizar')
 		# convertir arrays en 2D
 		X_train = X_train.reshape(-1, scales_len)
 		X_val = X_val.reshape(-1, scales_len)
@@ -420,23 +421,28 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 		X_train = scaler.transform(X_train)
 		X_val = scaler.transform(X_val)
 		X_test = scaler.transform(X_test)
+		
+		del scaler
+		
+		print('ya normalice')
 	
 	# dejar shape apta para red conv
-	X_train = X_train.reshape(-1, nperseg, scales_len, 1)
-	X_val = X_val.reshape(-1, nperseg, scales_len, 1)
-	X_test = X_test.reshape(-1, nperseg, scales_len, 1)
+	X_train = X_train.reshape(-1, nperseg, scales_len)
+	X_val = X_val.reshape(-1, nperseg, scales_len)
+	X_test = X_test.reshape(-1, nperseg, scales_len)
 	
+	print('ya toy listo con los x')
 	# generar etiquetas
 	i = len(keys)
 
-	Y_train = np.reshape( np.array(Y_train), (-1, 1) )
-	Y_train = to_categorical(Y_train, i)
+	Y_train = np.reshape( np.array(Y_train, dtype='int8'), (-1, 1) )
+	#Y_train = to_categorical(Y_train, i)
 
-	Y_val = np.reshape( np.array(Y_val), (-1, 1) )
-	Y_val = to_categorical(Y_val, i)
+	Y_val = np.reshape( np.array(Y_val, dtype='int8'), (-1, 1) )
+	#Y_val = to_categorical(Y_val, i)
 
-	Y_test = np.reshape( np.array(Y_test), (-1, 1) )
-	Y_test = to_categorical(Y_test, i)
+	Y_test = np.reshape( np.array(Y_test, dtype='int8'), (-1, 1) )
+	#Y_test = to_categorical(Y_test, i)
 
 	return X_train, X_val, X_test, Y_train, Y_val, Y_test
 # ----------------------------------------------------------------------------
