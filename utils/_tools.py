@@ -85,7 +85,65 @@ def get_time_windows_3D(data, nperseg, noverlap):
 	return X	
 # ----------------------------------------------------------------------------
 
-def generate_dataset_sp(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
+def generate_dataset_sp(df, fs=1.0, window=('tukey', 0.25), nperseg=None, 
+						noverlap=None, nfft=None, detrend='constant', 
+						return_onesided=True, scaling='density', 
+						axis=- 1, mode='psd'):
+							  
+	"""
+	Devuelve X y las etiquetas Y en one-hot-encoding
+	"""
+	
+	# obtener keys del datafram
+	keys = list(df.columns)
+
+	# inicializar listas vacías
+	X = list()
+	Y = list()
+	
+	# guardar series temporales en X
+	for i in keys:
+		X.append( np.array( df[i] ) )
+
+	# obtener espectrogramas y guardarlos en la lista
+	for i in range(len(keys)):
+		_, _, X[i] = signal.spectrogram(X[i], fs=fs, window=window, nperseg=nperseg,
+										noverlap=noverlap, nfft=nfft,detrend=detrend,
+										return_onesided=return_onesided,scaling=scaling,
+										axis=axis, mode=mode)
+		
+		# corregir shape
+		X[i] = X[i].transpose()
+
+		# generar  etiquetas
+		Y.append( [i]*X[i].shape[0] )
+		
+	# juntar todos los espectrogramas en un solo np.array
+	X = np.vstack(X)
+	
+	# generar etiquetas
+	i = len(keys)
+	Y = np.reshape( np.array(Y), (-1, 1) )
+	Y = to_categorical(Y, i)
+
+	return X, Y
+# ----------------------------------------------------------------------------
+
+def normalizar_sp(X_train, X_val, X_test):
+	# inicializar MinMaxScaler
+	scaler = MinMaxScaler( feature_range=(0, 1) )
+		
+	# fit scaler con los datos de entrenamiento X_train
+	scaler.fit(X_train)
+		
+	X_train = scaler.transform(X_train)
+	X_val = scaler.transform(X_val)
+	X_test = scaler.transform(X_test)
+	
+	return X_train, X_val, X_test
+# ----------------------------------------------------------------------------
+
+def generate_dataset_sp2(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 						window=('tukey', 0.25), nperseg=None, noverlap=None,
 						nfft=None, detrend='constant', return_onesided=True,
 						scaling='density', axis=- 1, mode='psd'):
@@ -171,139 +229,9 @@ def generate_dataset_sp(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 	Y_test = to_categorical(Y_test, i)
 
 	return X_train, X_val, X_test, Y_train, Y_val, Y_test
-	
 # ----------------------------------------------------------------------------
 
-def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
-				scales_len=30, wavelet='gaus1', sampling_period=1.0,
-				method='fft', normalizar=True):
-	
-	"""
-	A partir de un dataframe genera los conjuntos de datos X_train, X_val,
-	X_test y las etiquetas correspondientes Y_train, Y_val e Y_test. Utilizando
-	el método cwt.
-	
-	:param pd.dataframe df:
-		dataframe que en cada columna contiene una serie temporal correspondiente
-		a la medición de vibraciones de un rodamiento bajo determinadas condiciones
-		de operación.
-		
-	:param float train:
-		fracción del dataframe que será utilizado para generar datos de entrenamiento.
-		
-	:param float val:
-		fracción del dataframe que será utilizado para generar datos de validación.
-		
-	:param int nperseg:
-		largo de cada segmento (Ventanas temporales Funcion_Pancho)
-		
-	:param int noverlap:
-		numero de punto que se superponen entre un segmento y el siguiente.
-		
-	:param int scales_len:
-		cantidad de elementos que tiene el np.array Scales en el método CWT.
-		
-	:param str wavelet:
-		Wavelet que se utiliza en el método CWT.
-		
-	:param float sampling_period:
-		periodo de muestreo utilizado en la serie temporal.
-	:param boolean normalizar:
-		si es True los datos X_train, X_val y X_test son normalizados entre
-		(0,1) respecto al conjunto X_train, utilizando el método MinMaxScaler.
-	"""
-	
-	# obtener keys del dataframe
-	keys = list(df.columns)
-	
-	# separar dataframe en train, validation y test
-	df_train, df_val, df_test = split_dataframe(df, train=train, val=val)
-	
-	# inicializar listas vacías
-	train = list()
-	val = list()
-	test = list()
-	
-	Y_train = list()
-	Y_val = list()
-	Y_test = list()
-	
-	scales = np.arange( 1, scales_len+1 )
-	
-	#obtener escalograma y guardarlos en listas
-	for i in range(len(keys)):
-		sc_train, _ = pywt.cwt(np.array(df_train[keys[i]]), scales, wavelet,
-								sampling_period=sampling_period, method=method)
-								
-		sc_val, _ = pywt.cwt(np.array(df_val[keys[i]]), scales, wavelet,
-								sampling_period=sampling_period, method=method)
-								
-		sc_test, _ = pywt.cwt(np.array(df_test[keys[i]]), scales, wavelet,
-								sampling_period=sampling_period, method=method)
-		
-		#corregir shape
-		sc_train = sc_train.transpose()
-		sc_val = sc_val.transpose()
-		sc_test = sc_test.transpose()
-		
-		# Generar array 3D con ventanas temporales
-		sc_train = get_time_windows_3D(sc_train, nperseg, noverlap)
-		sc_val = get_time_windows_3D(sc_val, nperseg, noverlap)
-		sc_test = get_time_windows_3D(sc_test, nperseg, noverlap)
-
-		# guardar escalogramas en la lista
-		train.append(sc_train)
-		val.append(sc_val)
-		test.append(sc_test)
-		
-		# generar etiquetas
-		Y_train.append( [i]*sc_train.shape[0] )
-		Y_val.append( [i]*sc_val.shape[0] )
-		Y_test.append( [i]*sc_test.shape[0] )
-		
-	# juntar todos los escalogramas en un solo np.array
-	X_train = np.vstack(train)
-	X_val = np.vstack(val)
-	X_test = np.vstack(test)
-	
-	if normalizar:
-		# convertir arrays en 2D
-		X_train = X_train.reshape(-1, scales_len)
-		X_val = X_val.reshape(-1, scales_len)
-		X_test = X_test.reshape(-1, scales_len)
-		
-		# inicializar MinMaxScaler
-		scaler = MinMaxScaler( feature_range=(0, 1) )
-	
-		# fit scaler con los datos de entrenamiento X_train
-		scaler.fit(X_train)
-		
-		X_train = scaler.transform(X_train)
-		X_val = scaler.transform(X_val)
-		X_test = scaler.transform(X_test)
-	
-	# dejar shape apta para red conv
-	X_train = X_train.reshape(-1, nperseg, scales_len, 1)
-	X_val = X_val.reshape(-1, nperseg, scales_len, 1)
-	X_test = X_test.reshape(-1, nperseg, scales_len, 1)
-	
-	# generar etiquetas
-	i = len(keys)
-
-	Y_train = np.reshape( np.array(Y_train), (-1, 1) )
-	Y_train = to_categorical(Y_train, i)
-
-	Y_val = np.reshape( np.array(Y_val), (-1, 1) )
-	Y_val = to_categorical(Y_val, i)
-
-	Y_test = np.reshape( np.array(Y_test), (-1, 1) )
-	Y_test = to_categorical(Y_test, i)
-
-	return X_train, X_val, X_test, Y_train, Y_val, Y_test
-# ----------------------------------------------------------------------------
-
-
-def generate_dataset_sc(df, nperseg, noverlap, n_features=30,
+def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
 						wavelet=signal.ricker):
 	"""
 	A partir de un dataframe genera los conjuntos de datos X y las etiquetas Y
@@ -359,7 +287,6 @@ def generate_dataset_sc(df, nperseg, noverlap, n_features=30,
 	
 	# generar etiquetas
 	i = len(keys)
-
 	Y = np.reshape( np.array(Y), (-1, 1) )
 	Y = to_categorical(Y, i)
 
