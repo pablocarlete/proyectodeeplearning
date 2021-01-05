@@ -12,6 +12,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import confusion_matrix
 
 # ----------------------------------------------------------------------------
+
 def split_dataframe(df, train=0.7, val=0.2, dis=False):
 	"""
 	divide un dataframe en tres partes.
@@ -44,7 +45,6 @@ def split_dataframe(df, train=0.7, val=0.2, dis=False):
 		print( 'test split: {:d} data points'.format(df_test.shape[0]) )
 		
 	return df_train, df_val, df_test
-
 # ----------------------------------------------------------------------------
 
 def get_time_windows_3D(data, nperseg, noverlap):
@@ -52,19 +52,19 @@ def get_time_windows_3D(data, nperseg, noverlap):
 	-> np.array
 	generates a numpy array of time windows, of length nperwd, extracted
 	from data.
-	:param pd.Series x:
-      time series of measurement values.
-    :param int nperwd:
+	:param np.array data:
+      2D array de shape (n_data, n_features).
+    :param int nperseg:
       largo de ejemplos en cada ventana temporal.
-    :param int nleap:
+    :param int noverlap:
       numero de punto que se superponen entre un segmento y el siguiente.
     :returns:
-      a numpy array of size (n_windows, nperwd, scales_len).
+      a numpy array of size (n_windows, nperwd, n_features).
     """
 	
 	# obtener dimensiones del array
 	n_data = data.shape[0]
-	scales_len = data.shape[1]
+	n_features = data.shape[1]
 	nleap = nperseg - noverlap
 	
 	# determinar cantidad de ventanas a generar
@@ -72,7 +72,7 @@ def get_time_windows_3D(data, nperseg, noverlap):
 	n_windows = int(n_windows)
 	
 	# inicializar dataset
-	X = np.zeros( (n_windows, nperseg, scales_len) )
+	X = np.zeros( (n_windows, nperseg, n_features) )
 	
 	# generar time windows
 	for i in range(n_windows):
@@ -82,8 +82,7 @@ def get_time_windows_3D(data, nperseg, noverlap):
 		# asignar datos a X
 		X[i, :] = data[idx_start:idx_end]
 		
-	return X
-	
+	return X	
 # ----------------------------------------------------------------------------
 
 def generate_dataset_sp(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
@@ -175,7 +174,7 @@ def generate_dataset_sp(df,train=0.7, val=0.2, normalizar=True, fs=1.0,
 	
 # ----------------------------------------------------------------------------
 
-def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2,
+def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 				scales_len=30, wavelet='gaus1', sampling_period=1.0,
 				method='fft', normalizar=True):
 	
@@ -304,7 +303,7 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2,
 # ----------------------------------------------------------------------------
 
 
-def generate_dataset_sc2(df, nperseg, noverlap, n_features=30,
+def generate_dataset_sc(df, nperseg, noverlap, n_features=30,
 						wavelet=signal.ricker):
 	"""
 	A partir de un dataframe genera los conjuntos de datos X y las etiquetas Y
@@ -358,35 +357,6 @@ def generate_dataset_sc2(df, nperseg, noverlap, n_features=30,
 	# juntar todos los escalogramas en un solo np.array
 	X = np.vstack(X)
 	
-	"""
-	if normalizar:
-		print('wa normalizar')
-		# convertir arrays en 2D
-		X_train = X_train.reshape(-1, scales_len)
-		X_val = X_val.reshape(-1, scales_len)
-		X_test = X_test.reshape(-1, scales_len)
-		
-		# inicializar MinMaxScaler
-		scaler = MinMaxScaler( feature_range=(0, 1) )
-	
-		# fit scaler con los datos de entrenamiento X_train
-		scaler.fit(X_train)
-		
-		X_train = scaler.transform(X_train)
-		X_val = scaler.transform(X_val)
-		X_test = scaler.transform(X_test)
-		
-		del scaler
-		
-		print('ya normalice')
-	
-		# dejar shape apta para red conv
-		X_train = X_train.reshape(-1, nperseg, scales_len)
-		X_val = X_val.reshape(-1, nperseg, scales_len)
-		X_test = X_test.reshape(-1, nperseg, scales_len)
-	
-		print('ya toy listo con los x')
-	"""	
 	# generar etiquetas
 	i = len(keys)
 
@@ -395,6 +365,7 @@ def generate_dataset_sc2(df, nperseg, noverlap, n_features=30,
 
 	return X, Y
 # ----------------------------------------------------------------------------
+
 def normalizar_sc(X_train, X_val, X_test):
 	nperseg = X_train.shape[1]
 	n_features = X_train.shape[2]
@@ -420,7 +391,7 @@ def normalizar_sc(X_train, X_val, X_test):
 	X_test = X_test.reshape(-1, nperseg, n_features)
 	
 	return X_train, X_val, X_test
-	
+# ----------------------------------------------------------------------------
 
 def plot_confusion_matrix(Y_true, Y_pred, target_names,
                           title='Confusion matrix',
