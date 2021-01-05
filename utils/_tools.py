@@ -369,7 +369,7 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 	
 	#obtener escalograma y guardarlos en listas
 	scales = np.arange( 1, scales_len+1 )
-	
+	print('antes del for')
 	for i in range(len(keys)):
 		train[i] = signal.cwt(train[i], signal.ricker, scales)
 								
@@ -391,7 +391,8 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 		Y_train.append( [i]*train[i].shape[0] )
 		Y_val.append( [i]*val[i].shape[0] )
 		Y_test.append( [i]*test[i].shape[0] )
-		
+		print('iteracion: {}'.format(i))
+	print('sali del for')
 	# juntar todos los escalogramas en un solo np.array
 	X_train = np.vstack(train)
 	X_val = np.vstack(val)
