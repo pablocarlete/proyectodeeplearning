@@ -386,7 +386,8 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 		train[i] = get_time_windows_3D(train[i], nperseg, noverlap)
 		val[i] = get_time_windows_3D(val[i], nperseg, noverlap)
 		test[i] = get_time_windows_3D(test[i], nperseg, noverlap)
-		
+		if i == 0:
+			print(train[i].shape)
 		# generar etiquetas
 		Y_train.append( [i]*train[i].shape[0] )
 		Y_val.append( [i]*val[i].shape[0] )
