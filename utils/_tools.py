@@ -304,25 +304,16 @@ def generate_dataset_sc(df, nperseg, noverlap, train=0.7, val=0.2,
 # ----------------------------------------------------------------------------
 
 
-def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
-				scales_len=30, wavelet='gaus1', sampling_period=1.0,
-				method='fft', normalizar=True):
-	
+def generate_dataset_sc2(df, nperseg, noverlap, n_features=30,
+						wavelet=signal.ricker):
 	"""
-	A partir de un dataframe genera los conjuntos de datos X_train, X_val,
-	X_test y las etiquetas correspondientes Y_train, Y_val e Y_test. Utilizando
-	el método cwt.
+	A partir de un dataframe genera los conjuntos de datos X y las etiquetas Y
+	en formato one-hot-encoding. Utilizando el método cwt.
 	
 	:param pd.dataframe df:
 		dataframe que en cada columna contiene una serie temporal correspondiente
 		a la medición de vibraciones de un rodamiento bajo determinadas condiciones
 		de operación.
-		
-	:param float train:
-		fracción del dataframe que será utilizado para generar datos de entrenamiento.
-		
-	:param float val:
-		fracción del dataframe que será utilizado para generar datos de validación.
 		
 	:param int nperseg:
 		largo de cada segmento (Ventanas temporales Funcion_Pancho)
@@ -330,81 +321,44 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 	:param int noverlap:
 		numero de punto que se superponen entre un segmento y el siguiente.
 		
-	:param int scales_len:
+	:param int n_features:
 		cantidad de elementos que tiene el np.array Scales en el método CWT.
 		
-	:param str wavelet:
+	:param wavelet:
 		Wavelet que se utiliza en el método CWT.
-		
-	:param float sampling_period:
-		periodo de muestreo utilizado en la serie temporal.
-	:param boolean normalizar:
-		si es True los datos X_train, X_val y X_test son normalizados entre
-		(0,1) respecto al conjunto X_train, utilizando el método MinMaxScaler.
 	"""
 	
 	# obtener keys del dataframe
 	keys = list(df.columns)
 	
-	# separar dataframe en train, validation y test
-	df_train, df_val, df_test = split_dataframe(df, train=train, val=val)
-	
 	# inicializar listas vacías
-	train = list()
-	val = list()
-	test = list()
+	X = list()
+	Y = list()
 	
-	Y_train = list()
-	Y_val = list()
-	Y_test = list()
-	
-	# guardar series temporales en listas
+	# guardar series temporales en X
 	for i in keys:
-		train.append( np.array( df_train[i] ) )
-		val.append( np.array( df_val[i] ) )
-		test.append( np.array( df_test[i] ) )
-		
-	# eliminar dataframes
-	del df_train, df_val, df_test
+		X.append( np.array( df[i] ) )
 	
 	#obtener escalograma y guardarlos en listas
-	scales = np.arange( 1, scales_len+1 )
-	print('antes del for')
+	widths = np.arange( 1, n_features+1 )
+	
 	for i in range(len(keys)):
-		train[i] = signal.cwt(train[i], signal.ricker, scales)
-								
-		val[i] = signal.cwt(val[i], signal.ricker, scales)
-								
-		test[i] = signal.cwt(test[i], signal.ricker, scales)
+		X[i] = signal.cwt(X[i], signal.ricker, widths)
 		
 		#corregir shape
-		train[i] = train[i].transpose()
-		val[i] = val[i].transpose()
-		test[i] = test[i].transpose()
+		X[i] = X[i].transpose()
 		
 		# Generar array 3D con ventanas temporales
-		train[i] = get_time_windows_3D(train[i], nperseg, noverlap)
-		val[i] = get_time_windows_3D(val[i], nperseg, noverlap)
-		test[i] = get_time_windows_3D(test[i], nperseg, noverlap)
-		if i == 0:
-			print(train[i].shape)
-			print(val[i].shape)
-			print(test[i].shape)
+		X[i] = get_time_windows_3D(X[i], nperseg, noverlap)
+		
 		# generar etiquetas
-		Y_train.append( [i]*train[i].shape[0] )
-		Y_val.append( [i]*val[i].shape[0] )
-		Y_test.append( [i]*test[i].shape[0] )
-		print('iteracion: {}'.format(i))
-	print('sali del for')
+		Y.append( [i]*X[i].shape[0] )
+
 	
 	# juntar todos los escalogramas en un solo np.array
-	X_train = np.vstack(train)
-	del train
-	X_val = np.vstack(val)
-	del val
-	X_test = np.vstack(test)
-	del test
+	X = np.vstack(X)
 	
+	"""
 	if normalizar:
 		print('wa normalizar')
 		# convertir arrays en 2D
@@ -426,25 +380,20 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 		
 		print('ya normalice')
 	
-	# dejar shape apta para red conv
-	X_train = X_train.reshape(-1, nperseg, scales_len)
-	X_val = X_val.reshape(-1, nperseg, scales_len)
-	X_test = X_test.reshape(-1, nperseg, scales_len)
+		# dejar shape apta para red conv
+		X_train = X_train.reshape(-1, nperseg, scales_len)
+		X_val = X_val.reshape(-1, nperseg, scales_len)
+		X_test = X_test.reshape(-1, nperseg, scales_len)
 	
-	print('ya toy listo con los x')
+		print('ya toy listo con los x')
+	"""	
 	# generar etiquetas
 	i = len(keys)
 
-	Y_train = np.reshape( np.array(Y_train, dtype='int8'), (-1, 1) )
-	#Y_train = to_categorical(Y_train, i)
+	Y = np.reshape( np.array(Y), (-1, 1) )
+	Y = to_categorical(Y, i)
 
-	Y_val = np.reshape( np.array(Y_val, dtype='int8'), (-1, 1) )
-	#Y_val = to_categorical(Y_val, i)
-
-	Y_test = np.reshape( np.array(Y_test, dtype='int8'), (-1, 1) )
-	#Y_test = to_categorical(Y_test, i)
-
-	return X_train, X_val, X_test, Y_train, Y_val, Y_test
+	return X, Y
 # ----------------------------------------------------------------------------
 
 
