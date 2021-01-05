@@ -415,9 +415,9 @@ def normalizar_sc(X_train, X_val, X_test):
 	X_test = scaler.transform(X_test)
 	
 	# convertir a 3D
-	X_train = X_train.reshape(-1, nperseg, scales_len)
-	X_val = X_val.reshape(-1, nperseg, scales_len)
-	X_test = X_test.reshape(-1, nperseg, scales_len)
+	X_train = X_train.reshape(-1, nperseg, n_features)
+	X_val = X_val.reshape(-1, nperseg, n_features)
+	X_test = X_test.reshape(-1, nperseg, n_features)
 	
 	return X_train, X_val, X_test
 	
