@@ -396,12 +396,14 @@ def generate_dataset_sc2(df, nperseg, noverlap, train=0.7, val=0.2,
 		Y_test.append( [i]*test[i].shape[0] )
 		print('iteracion: {}'.format(i))
 	print('sali del for')
+	
 	# juntar todos los escalogramas en un solo np.array
 	X_train = np.vstack(train)
+	del train
 	X_val = np.vstack(val)
+	del val
 	X_test = np.vstack(test)
-	
-	del train, val, test
+	del test
 	
 	if normalizar:
 		# convertir arrays en 2D
