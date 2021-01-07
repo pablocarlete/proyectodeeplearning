@@ -276,6 +276,7 @@ def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
 	
 	for i in range(len(keys)):
 		X[i] = signal.cwt(X[i], signal.ricker, widths)
+		X[i] = X[i].astype('float32')
 		
 		#corregir shape
 		X[i] = X[i].transpose()
