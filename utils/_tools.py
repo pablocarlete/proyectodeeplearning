@@ -76,7 +76,7 @@ def get_time_windows(df, nperseg, noverlap):
 			
 		X.append(x)
 		
-	return X
+	return X, n_windows
 # ----------------------------------------------------------------------------
 
 def get_time_windows_3D(data, nperseg, noverlap):
@@ -173,6 +173,65 @@ def normalizar_sp(X_train, X_val, X_test):
 	X_test = scaler.transform(X_test)
 	
 	return X_train, X_val, X_test
+# ----------------------------------------------------------------------------
+
+def generate_dataset_sc_estesi(df, nperseg=30, noverlap=15, n_features=30,
+						wavelet=signal.ricker):
+	"""
+	A partir de un dataframe genera los conjuntos de datos X y las etiquetas Y
+	en formato one-hot-encoding. Utilizando el método cwt.
+	
+	:param pd.dataframe df:
+		dataframe que en cada columna contiene una serie temporal correspondiente
+		a la medición de vibraciones de un rodamiento bajo determinadas condiciones
+		de operación.
+		
+	:param int nperseg:
+		largo de cada segmento (Ventanas temporales Funcion_Pancho)
+		
+	:param int noverlap:
+		numero de punto que se superponen entre un segmento y el siguiente.
+		
+	:param int n_features:
+		cantidad de elementos que tiene el np.array Scales en el método CWT.
+		
+	:param wavelet:
+		Wavelet que se utiliza en el método CWT.
+	"""
+	
+	# obtener keys del dataframe
+	keys = list(df.columns)
+	
+	# inicializar listas
+	X, n_windows = get_time_windows(df, nperseg, noverlap)
+	Y = list()
+	
+	#obtener escalograma y guardarlos en listas
+	widths = np.arange( 1, n_features+1 )
+	
+	for i in range(len(keys)):
+		#sc = np.zeros()
+		X[i] = signal.cwt(X[i], signal.ricker, widths)
+		
+		#corregir shape
+		X[i] = X[i].transpose()
+		
+		# Generar array 3D con ventanas temporales
+		X[i] = get_time_windows_3D(X[i], nperseg, noverlap)
+		
+		# generar etiquetas
+		Y.append( [i]*X[i].shape[0] )
+
+	
+	# juntar todos los escalogramas en un solo np.array
+	X = np.vstack(X)
+	
+	# generar etiquetas
+	i = len(keys)
+	Y = np.reshape( np.array(Y), (-1, 1) )
+	Y = to_categorical(Y, i)
+
+	return X, Y
 # ----------------------------------------------------------------------------
 
 def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
