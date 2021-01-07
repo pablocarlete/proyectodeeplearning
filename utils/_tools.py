@@ -210,14 +210,16 @@ def generate_dataset_sc_estesi(df, nperseg=30, noverlap=15, n_features=30,
 	widths = np.arange( 1, n_features+1 )
 	
 	for i in range(len(keys)):
-		#sc = np.zeros()
-		X[i] = signal.cwt(X[i], signal.ricker, widths)
-		
-		#corregir shape
-		X[i] = X[i].transpose()
-		
-		# Generar array 3D con ventanas temporales
-		X[i] = get_time_windows_3D(X[i], nperseg, noverlap)
+		sc = np.zeros((n_windows, nperseg, n_features))
+		for j in range(n_windows):
+			# obtener escalograma
+			cwt = signal.cwt(X[i][j,:], signal.ricker, widths)
+			cwt = cwt.transpose()
+			
+			#guardar escalograma en fila correspondiente
+			sc[j,:,:] = cwt
+		# guardar escalograma en lista	
+		X[i] = sc
 		
 		# generar etiquetas
 		Y.append( [i]*X[i].shape[0] )
