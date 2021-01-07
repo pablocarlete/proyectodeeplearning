@@ -54,7 +54,7 @@ def get_time_windows(df, nperseg, noverlap):
 	
 	for i in keys:
 		# obtener np.array de la serie de datos
-		y = np.array( data[i])
+		y = np.array( df[i])
 		n_data = y.shape[0]
 		
 		nleap = nperseg - noverlap
