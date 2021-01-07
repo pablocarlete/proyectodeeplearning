@@ -279,7 +279,7 @@ def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
 		X[i] = X[i].astype('float32')
 		
 		#corregir shape
-		X[i] = X[i].transpose()
+		#X[i] = X[i].transpose()
 		
 		# Generar array 3D con ventanas temporales
 		X[i] = get_time_windows_3D(X[i], nperseg, noverlap)
