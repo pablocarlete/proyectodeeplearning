@@ -47,6 +47,38 @@ def split_dataframe(df, train=0.7, val=0.2, dis=False):
 	return df_train, df_val, df_test
 # ----------------------------------------------------------------------------
 
+def get_time_windows(df, nperseg, noverlap):
+	
+	keys = list(df.columns)
+	X = list()
+	
+	for i in keys:
+		# obtener np.array de la serie de datos
+		y = np.array( data[i])
+		n_data = y.shape[0]
+		
+		nleap = nperseg - noverlap
+		
+		# determinar cantidad de ventanas a generar
+		n_windows = np.floor( (n_data - nperseg)/nleap ) + 1
+		n_windows = int(n_windows)
+		
+		# inicializar dataset
+		x = np.zeros( (n_windows, nperseg) )
+		
+		# generar time windows
+		for i in range(n_windows):
+			# obtener index de la ventana
+			idx_start, idx_end = i*nleap, i*nleap + nperseg
+      
+			# asignar datos a X
+			x[i, :] = y[idx_start:idx_end]
+			
+		X.append(x)
+		
+	return X
+# ----------------------------------------------------------------------------
+
 def get_time_windows_3D(data, nperseg, noverlap):
 	"""
 	-> np.array
