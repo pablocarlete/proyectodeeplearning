@@ -178,7 +178,7 @@ def normalizar_sp(X_train, X_val, X_test):
 # ----------------------------------------------------------------------------
 
 def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
-						wavelet=signal.ricker):
+						wavelet=signal.ricker, dtype='float32'):
 	"""
 	A partir de un dataframe genera los conjuntos de datos X y las etiquetas Y
 	en formato one-hot-encoding. Utilizando el método cwt.
@@ -216,7 +216,7 @@ def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
 	widths = np.arange( 1, n_features+1 )
 	
 	for i in range(len(keys)):
-		X[i] = signal.cwt(X[i], signal.ricker, widths)
+		X[i] = signal.cwt(X[i], signal.ricker, widths, dtype='float32')
 		X[i] = X[i].astype('float32')
 		
 		#corregir shape
