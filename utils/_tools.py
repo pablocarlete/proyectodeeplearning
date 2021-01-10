@@ -11,6 +11,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 from sklearn.metrics import confusion_matrix
 
+from skimage.transform import resize
+
 # ----------------------------------------------------------------------------
 
 def split_dataframe(df, train=0.7, val=0.2, dis=False):
@@ -175,69 +177,6 @@ def normalizar_sp(X_train, X_val, X_test):
 	return X_train, X_val, X_test
 # ----------------------------------------------------------------------------
 
-def generate_dataset_sc_estesi(df, nperseg=30, noverlap=15, n_features=30,
-						wavelet=signal.ricker):
-	"""
-	A partir de un dataframe genera los conjuntos de datos X y las etiquetas Y
-	en formato one-hot-encoding. Utilizando el método cwt.
-	
-	:param pd.dataframe df:
-		dataframe que en cada columna contiene una serie temporal correspondiente
-		a la medición de vibraciones de un rodamiento bajo determinadas condiciones
-		de operación.
-		
-	:param int nperseg:
-		largo de cada segmento (Ventanas temporales Funcion_Pancho)
-		
-	:param int noverlap:
-		numero de punto que se superponen entre un segmento y el siguiente.
-		
-	:param int n_features:
-		cantidad de elementos que tiene el np.array Scales en el método CWT.
-		
-	:param wavelet:
-		Wavelet que se utiliza en el método CWT.
-	"""
-	
-	# obtener keys del dataframe
-	keys = list(df.columns)
-	
-	# inicializar listas
-	X, n_windows = get_time_windows(df, nperseg, noverlap)
-	Y = list()
-	
-	#obtener escalograma y guardarlos en listas
-	widths = np.arange( 1, n_features+1 )
-	
-	for i in range(len(keys)):
-		sc = np.zeros((n_windows, nperseg, n_features), dtype='float32')
-		for j in range(n_windows):
-			# obtener escalograma
-			cwt = signal.cwt(X[i][j,:], signal.ricker, widths)
-			cwt = cwt.astype('float32')
-			
-			#cwt = cwt.transpose()
-			
-			#guardar escalograma en fila correspondiente
-			sc[j,:,:] = cwt
-		# guardar escalograma en lista	
-		X[i] = sc
-		
-		# generar etiquetas
-		Y.append( [i]*X[i].shape[0] )
-
-	
-	# juntar todos los escalogramas en un solo np.array
-	X = np.vstack(X)
-	
-	# generar etiquetas
-	i = len(keys)
-	Y = np.reshape( np.array(Y), (-1, 1) )
-	Y = to_categorical(Y, i)
-
-	return X, Y
-# ----------------------------------------------------------------------------
-
 def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
 						wavelet=signal.ricker):
 	"""
@@ -299,6 +238,14 @@ def generate_dataset_sc(df, nperseg=30, noverlap=15, n_features=30,
 	Y = to_categorical(Y, i)
 
 	return X, Y
+# ----------------------------------------------------------------------------
+
+def resize_sc(X_train, X_val, X_test, rs_len):
+	X_train = resize(X_train, (X_train.shape[0], rs_len, X_train.shape[2]))
+	X_val = resize(X_val, (X_val.shape[0], rs_len, X_val.shape[2]))
+	X_test = resize(X_test, (X_test.shape[0], rs_len, X_test.shape[2]))
+	
+	return X_train, X_val, X_test
 # ----------------------------------------------------------------------------
 
 def normalizar_sc(X_train, X_val, X_test):
